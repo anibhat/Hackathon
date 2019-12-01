@@ -1,0 +1,5 @@
+<dependency>
+    <groupId>com.amazonaws.serverless</groupId>
+    <artifactId>aws-serverless-java-container-spring</artifactId>
+    <version>1.4</version>
+</dependency>
