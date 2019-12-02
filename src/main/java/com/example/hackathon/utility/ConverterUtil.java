@@ -9,21 +9,35 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 import org.apache.maven.shared.invoker.DefaultInvocationRequest;
 import org.apache.maven.shared.invoker.DefaultInvoker;
 import org.apache.maven.shared.invoker.InvocationRequest;
 import org.apache.maven.shared.invoker.Invoker;
 import org.apache.maven.shared.invoker.MavenInvocationException;
+import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.api.errors.InvalidRemoteException;
+import org.eclipse.jgit.api.errors.TransportException;
+import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 
 @Service
 public class ConverterUtil {
-
+	
+	@Value("${pathToClone}")
+	public String pathToSave;
+	
+	@Value("${mavenInstallationPath}")
+	public String mavenInstallationPath;
+	
 	public static List<String> fileList = new ArrayList<String>();
 	
 	 /**
@@ -52,7 +66,17 @@ public class ConverterUtil {
 	public static void setFileList(List<String> fileList) {
 		ConverterUtil.fileList = fileList;
 	}
+	
+	
     
+	public String getPathToSave() {
+		return pathToSave;
+	}
+
+	public void setPathToSave(String pathToSave) {
+		this.pathToSave = pathToSave;
+	}
+
 	public String getSpringBootApplicationPath(List<String> fileList) throws IOException {
 		for(String st : fileList) {
 			if (st.endsWith(".java")) {
@@ -167,9 +191,34 @@ public class ConverterUtil {
 		request.setGoals( Collections.singletonList( "clean install" ) );
 
 		Invoker invoker = new DefaultInvoker();
-		invoker.setMavenHome(new File("C:\\Maven\\apache-maven-3.6.3"));
+		invoker.setMavenHome(new File(mavenInstallationPath));
 
 	     invoker.execute( request );
 	}
+	
+	public String cloneRepository(String repository, String userName, String password) throws InvalidRemoteException, TransportException, GitAPIException {
+		String[] repositoryNames = repository.split("/");
+		String[] gitName = repositoryNames[repositoryNames.length - 1].split(".git");
+		String appName = gitName[0];
+		new File(pathToSave+File.separator+appName).mkdir();
+		
+		Git.cloneRepository()
+		  .setURI(repository)
+		  .setCredentialsProvider(new UsernamePasswordCredentialsProvider(userName, password))
+		  .setDirectory(new File(pathToSave+File.separator+appName))
+		  .call();
+		
+		return pathToSave+File.separator+appName;
+	}
     
+	
+	public void deleteDir(String path) throws IOException {
+		Path rootPath = Paths.get(path);
+		try (Stream<Path> walk = Files.walk(rootPath)) {
+		    walk.sorted(Comparator.reverseOrder())
+		        .map(Path::toFile)
+		        .peek(System.out::println)
+		        .forEach(File::delete);
+	}
+	}
 }
