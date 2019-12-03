@@ -200,7 +200,7 @@ public class ConverterUtil {
 			
 			
 			int pIndex = sb.indexOf("<plugin>");
-			int eIndex = sb.lastIndexOf("</plugin>")
+			int eIndex = sb.lastIndexOf("</plugin>");
 			sb.insert(pIndex, PluginfileContent+"\r\n");
 			
 			Files.write(path, sb.toString().getBytes(charset));
