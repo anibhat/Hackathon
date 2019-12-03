@@ -20,4 +20,4 @@
                     </configuration>
                 </execution>
             </executions>
-        </plugin>
+       
