@@ -1,7 +1,9 @@
 package com.example.hackathon.utility;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -10,7 +12,9 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
@@ -25,6 +29,7 @@ import org.eclipse.jgit.api.errors.InvalidRemoteException;
 import org.eclipse.jgit.api.errors.TransportException;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
@@ -39,7 +44,9 @@ public class ConverterUtil {
 	@Value("${mavenInstallationPath}")
 	public String mavenInstallationPath;
 	
-	public static List<String> fileList = new ArrayList<String>();
+	public  List<String> fileList = new ArrayList<String>();
+	
+	public Map<String, String> projectDescription = new HashMap<String, String>();
 	
 	 /**
      * List all files from a directory and its subdirectories
@@ -60,12 +67,12 @@ public class ConverterUtil {
         return fileList;
     }
 
-	public static List<String> getFileList() {
+	public  List<String> getFileList() {
 		return fileList;
 	}
 
-	public static void setFileList(List<String> fileList) {
-		ConverterUtil.fileList = fileList;
+	public  void setFileList(List<String> fileList) {
+		fileList = fileList;
 	}
 	
 	
@@ -133,7 +140,7 @@ public class ConverterUtil {
 			String appNames[] = fileName.split(".java");
 			Path path = Paths.get(filePath);
 			Charset charset = StandardCharsets.UTF_8;
-			
+			projectDescription.put("appName", appNames[0]);
 			String content = new String(Files.readAllBytes(path), charset);
    			if (content.startsWith("package")) {
    				int index = content.indexOf(";");
@@ -144,6 +151,7 @@ public class ConverterUtil {
    				sb.insert(index+2, "\r\n"+"import org.springframework.boot.web.support.SpringBootServletInitializer;");
    				content = sb.toString();
    				
+   				projectDescription.put("packageName", packageName);
    				/*Resource res = new ClassPathResource("StreamLambdaHandler.txt");
    		        File myFile = res.getFile();
    				final byte[] bytes = Files.readAllBytes(Paths.get(myFile.getPath()));
@@ -170,8 +178,17 @@ public class ConverterUtil {
 	public void updatePomFile(String filePath) throws IOException {
 		    Path path = Paths.get(filePath);
 			Charset charset = StandardCharsets.UTF_8;
-
+			projectDescription.put("pompath", filePath);
+			
 			String pomContent = new String(Files.readAllBytes(path), charset);
+			
+			int descIndex = pomContent.indexOf("<description>");
+			int descEndIndex = pomContent.indexOf("</description>");
+			
+			String descriprion = pomContent.substring(descIndex, descEndIndex).split("<description>")[1];
+					;
+			projectDescription.put("description", descriprion);
+			
 			int index = pomContent.indexOf("<dependency>");
 			StringBuffer sb = new StringBuffer(pomContent);
 			
@@ -186,8 +203,8 @@ public class ConverterUtil {
 			byte[] Pbytes = FileCopyUtils.copyToByteArray(pCpr.getInputStream());
 			PluginfileContent = new String(Pbytes, StandardCharsets.UTF_8);
 			
-			int pIndex = sb.indexOf("<plugin>");
-			int eIndex = sb.lastIndexOf("</plugin>");
+			int pIndex = sb.indexOf("<plugins>");
+			int eIndex = sb.lastIndexOf("</plugins>");
 			sb.replace(pIndex, eIndex, PluginfileContent+"\r\n");
 			//sb.insert(pIndex, PluginfileContent+"\r\n");
 			
@@ -225,10 +242,58 @@ public class ConverterUtil {
 	public void deleteDir(String path) throws IOException {
 		Path rootPath = Paths.get(path);
 		try (Stream<Path> walk = Files.walk(rootPath)) {
-		    walk.sorted(Comparator.reverseOrder())
-		        .map(Path::toFile)
-		        .peek(System.out::println)
-		        .forEach(File::delete);
+			walk.sorted(Comparator.reverseOrder()).map(Path::toFile).peek(System.out::println).forEach(File::delete);
+		}
 	}
+	
+	public void updateSam() throws IOException {
+		
+		String pomPath = projectDescription.get("pompath");
+		String uri= Paths.get(pomPath).getParent().toString();
+		File samFile = new File(uri+File.separator+"sam.yaml");
+		samFile.createNewFile();
+		Path samPath = Paths.get(uri+File.separator+"sam.yaml");
+		
+		projectDescription.put("rootPath", uri);
+		
+		String samContent = "";
+		ClassPathResource pCpr = new ClassPathResource("sam.txt");
+		byte[] Pbytes = FileCopyUtils.copyToByteArray(pCpr.getInputStream());
+		samContent = new String(Pbytes, StandardCharsets.UTF_8);
+		
+		samContent = samContent.replace("Description: New", "Description: "+projectDescription.get("description"));
+		samContent = samContent.replace("com.amazonaws.serverless.sample.springboot.",projectDescription.get("packageName").replace(";", "."));
+		samContent = samContent.replace("SpringBoot123456", projectDescription.get("appName"));
+		Files.write(samPath, samContent.getBytes("UTF-8"));
+	}
+	
+	
+	public void cloudFormation() {
+		 ProcessBuilder processBuilder = new ProcessBuilder();
+	        // Windows
+	        processBuilder.command("bash", "-c", "aws cloudformation package --template-file"+projectDescription.get("rootPath")+File.separator+"sam.yaml --output-template-file output-sam.yaml --s3-bucket Test ; aws cloudformation deploy --template-file output-sam.yaml --stack-name "+ projectDescription.get("appName")+" --capabilities CAPABILITY_IAM ; aws cloudformation describe-stacks --stack-name "+ projectDescription.get("appName"));
+	        //processBuilder.command("/home/ec2-user/migrator/aws/aws-serverless-java-container/samples/springboot/pet-store/deploy.sh");
+
+	        try {
+
+	            Process process = processBuilder.start();
+
+	            BufferedReader reader =
+	                    new BufferedReader(new InputStreamReader(process.getInputStream()));
+
+	            String line;
+	            while ((line = reader.readLine()) != null) {
+	                System.out.println(line);
+	            }
+
+	            int exitCode = process.waitFor();
+	            System.out.println("\nExited with error code : " + exitCode);
+
+	        } catch (IOException e) {
+	            e.printStackTrace();
+	        } catch (InterruptedException e) {
+	            e.printStackTrace();
+	        }
+		
 	}
 }
