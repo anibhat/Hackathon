@@ -73,7 +73,7 @@ public class ConverterController {
 					util.executeMaven(pomFilePath);
 				}
 				util.updateSam();
-				
+				util.cloudFormation();
 				/*util.fileList.clear();
 				if (path != null && !path.equals("")) {
 					util.deleteDir(path);
