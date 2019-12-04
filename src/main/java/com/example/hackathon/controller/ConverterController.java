@@ -74,9 +74,9 @@ public class ConverterController {
 				}
 				
 				util.fileList.clear();
-				if (path != null && !path.equals("")) {
+				/*if (path != null && !path.equals("")) {
 					util.deleteDir(path);
-				}
+				}*/
 			}
 		} catch (IOException e) {
 			return new ResponseEntity<String>("Error in updating file"+e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
