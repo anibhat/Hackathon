@@ -1,3 +1,5 @@
+<finalName>Test</finalName>
+<plugins>
  <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-shade-plugin</artifactId>
@@ -20,4 +22,4 @@
                     </configuration>
                 </execution>
             </executions>
-       
+       </plugin>
