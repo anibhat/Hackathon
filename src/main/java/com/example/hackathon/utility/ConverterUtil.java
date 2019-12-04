@@ -14,7 +14,6 @@ import java.util.List;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
-import org.springframework.util.FileCopyUtils;
 import org.apache.maven.shared.invoker.DefaultInvocationRequest;
 import org.apache.maven.shared.invoker.DefaultInvoker;
 import org.apache.maven.shared.invoker.InvocationRequest;
@@ -29,6 +28,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
+import org.springframework.util.FileCopyUtils;
 
 @Service
 public class ConverterUtil {
@@ -144,16 +144,16 @@ public class ConverterUtil {
    				sb.insert(index+2, "\r\n"+"import org.springframework.boot.web.support.SpringBootServletInitializer;");
    				content = sb.toString();
    				
-			/*
-			 * Resource res = new ClassPathResource("StreamLambdaHandler.txt"); File myFile
-			 * = res.getFile(); final byte[] bytes =
-			 * Files.readAllBytes(Paths.get(myFile.getPath())); String fileContent = new
-			 * String(bytes, charset);
-			 */
+   				/*Resource res = new ClassPathResource("StreamLambdaHandler.txt");
+   		        File myFile = res.getFile();
+   				final byte[] bytes = Files.readAllBytes(Paths.get(myFile.getPath()));
+   				String fileContent = new String(bytes, charset);*/
+   				
    				String fileContent = "";
    				ClassPathResource cpr = new ClassPathResource("StreamLambdaHandler.txt");
    				byte[] bdata = FileCopyUtils.copyToByteArray(cpr.getInputStream());
    				fileContent = new String(bdata, StandardCharsets.UTF_8);
+   				
    				
    				fileContent = fileContent.replaceAll("package", "package "+packageName);
    				fileContent = fileContent.replaceAll("SpringBootDemoApplication12356", appNames[0]);
@@ -175,34 +175,22 @@ public class ConverterUtil {
 			int index = pomContent.indexOf("<dependency>");
 			StringBuffer sb = new StringBuffer(pomContent);
 			
-		/*
-		 * Resource res = new ClassPathResource("dependency.txt"); File myFile =
-		 * res.getFile(); final byte[] bytes =
-		 * Files.readAllBytes(Paths.get(myFile.getPath())); String fileContent = new
-		 * String(bytes, charset);
-		 */
-				String fileContent = "";
-				ClassPathResource cpr = new ClassPathResource("dependency.txt");
-				byte[] bdata = FileCopyUtils.copyToByteArray(cpr.getInputStream());
-				fileContent = new String(bdata, StandardCharsets.UTF_8);
-			
+			String fileContent = "";
+			ClassPathResource cpr = new ClassPathResource("dependency.txt");
+			byte[] bdata = FileCopyUtils.copyToByteArray(cpr.getInputStream());
+			fileContent = new String(bdata, StandardCharsets.UTF_8);
 			sb.insert(index, fileContent+"\r\n");
 			
-		/*
-		 * Resource pluginRes = new ClassPathResource("plugin.txt"); File pluginFile =
-		 * pluginRes.getFile(); final byte[] Pbytes =
-		 * Files.readAllBytes(Paths.get(pluginFile.getPath())); String PluginfileContent
-		 * = new String(Pbytes, charset);
-		 */
 			String PluginfileContent = "";
 			ClassPathResource pCpr = new ClassPathResource("plugin.txt");
-			byte[] pBdata = FileCopyUtils.copyToByteArray(pCpr.getInputStream());
-			PluginfileContent = new String(pBdata, StandardCharsets.UTF_8);
-			
+			byte[] Pbytes = FileCopyUtils.copyToByteArray(pCpr.getInputStream());
+			PluginfileContent = new String(Pbytes, StandardCharsets.UTF_8);
 			
 			int pIndex = sb.indexOf("<plugin>");
 			int eIndex = sb.lastIndexOf("</plugin>");
-			sb.insert(pIndex, PluginfileContent+"\r\n");
+			sb.replace(pIndex, eIndex, PluginfileContent+"\r\n");
+			//sb.insert(pIndex, PluginfileContent+"\r\n");
+			
 			
 			Files.write(path, sb.toString().getBytes(charset));
 	}
