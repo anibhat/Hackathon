@@ -72,9 +72,10 @@ public class ConverterController {
 					util.updatePomFile(pomFilePath);
 					util.executeMaven(pomFilePath);
 				}
+				util.updateSam();
 				
-				util.fileList.clear();
-				/*if (path != null && !path.equals("")) {
+				/*util.fileList.clear();
+				if (path != null && !path.equals("")) {
 					util.deleteDir(path);
 				}*/
 			}
