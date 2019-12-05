@@ -29,9 +29,7 @@ import org.eclipse.jgit.api.errors.InvalidRemoteException;
 import org.eclipse.jgit.api.errors.TransportException;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider;
 import org.springframework.core.io.ClassPathResource;
-import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.util.FileCopyUtils;
 
@@ -203,19 +201,21 @@ public class ConverterUtil {
 			byte[] Pbytes = FileCopyUtils.copyToByteArray(pCpr.getInputStream());
 			PluginfileContent = new String(Pbytes, StandardCharsets.UTF_8);
 			
-			int pIndex = sb.indexOf("<plugins>");
-			int eIndex = sb.lastIndexOf("</plugins>");
-			sb.replace(pIndex, eIndex, PluginfileContent+"\r\n");
+			int pIndex = sb.indexOf("<build>");
+			int eIndex = sb.lastIndexOf("</build>");
+			sb.delete(pIndex, eIndex);
+			String val = sb.toString();
+			val = val.replace("</build>", PluginfileContent+"\r\n");
 			//sb.insert(pIndex, PluginfileContent+"\r\n");
 			
 			
-			Files.write(path, sb.toString().getBytes(charset));
+			Files.write(path, val.getBytes(charset));
 	}
 	
 	public void executeMaven(String filePath) throws MavenInvocationException {
 		InvocationRequest request = new DefaultInvocationRequest();
 		request.setPomFile( new File(filePath ) );
-		request.setGoals( Collections.singletonList( "clean install" ) );
+		request.setGoals( Collections.singletonList( "clean package" ) );
 
 		Invoker invoker = new DefaultInvoker();
 		invoker.setMavenHome(new File(mavenInstallationPath));
@@ -264,14 +264,42 @@ public class ConverterUtil {
 		samContent = samContent.replace("Description: New", "Description: "+projectDescription.get("description"));
 		samContent = samContent.replace("com.amazonaws.serverless.sample.springboot.",projectDescription.get("packageName").replace(";", "."));
 		samContent = samContent.replace("SpringBoot123456", projectDescription.get("appName"));
+		//samContent = samContent.replace("PetStoreFunction", "ServerlessApiFunction");
 		Files.write(samPath, samContent.getBytes("UTF-8"));
 	}
 	
 	
+	public void updateBin() throws IOException {
+		String binPath = projectDescription.get("rootPath");
+		String binContent = "";
+		ClassPathResource pCpr = new ClassPathResource("bin.txt");
+		byte[] Pbytes = FileCopyUtils.copyToByteArray(pCpr.getInputStream());
+		binContent = new String(Pbytes, StandardCharsets.UTF_8);
+		
+		File binFile = new File(binPath+File.separator+"bin.xml");
+		binFile.createNewFile();
+		Path path = Paths.get(binPath+File.separator+"bin.xml");
+		
+		Files.write(path, binContent.getBytes("UTF-8"));
+	}
+	
 	public void cloudFormation() {
 		 ProcessBuilder processBuilder = new ProcessBuilder();
 	        // Windows
-	        processBuilder.command("bash", "-c", "aws cloudformation package --template-file"+projectDescription.get("rootPath")+File.separator+"sam.yaml --output-template-file output-sam.yaml --s3-bucket Test ; aws cloudformation deploy --template-file output-sam.yaml --stack-name "+ projectDescription.get("appName")+" --capabilities CAPABILITY_IAM ; aws cloudformation describe-stacks --stack-name "+ projectDescription.get("appName"));
+	        //processBuilder.command("bash", "-c", "aws cloudformation package --template-file "+projectDescription.get("rootPath")+File.separator+"sam.yaml --output-template-file output-sam.yaml --s3-bucket Test ; aws cloudformation deploy --template-file output-sam.yaml --stack-name "+ projectDescription.get("appName")+" --capabilities CAPABILITY_IAM ; aws cloudformation describe-stacks --stack-name "+ projectDescription.get("appName"));
+	        
+	        StringBuffer sb = new StringBuffer();
+	        sb.append("aws cloudformation package --template-file ");
+	        sb.append(projectDescription.get("rootPath")+File.separator);
+	        sb.append("\"sam.yaml --output-template-file ");
+	        sb.append(projectDescription.get("rootPath")+File.separator);
+	        sb.append("output-sam.yaml --s3-bucket aws-serverless-springboot-app-001 ;");
+	        sb.append("aws cloudformation deploy --template-file ");
+	        sb.append(projectDescription.get("rootPath")+File.separator);
+	        sb.append("output-sam.yaml --stack-name ServerlessSpringBootApp --capabilities CAPABILITY_IAM ;");
+	        sb.append(" aws cloudformation describe-stacks --stack-name ServerlessSpringBootApp");
+	        
+	        processBuilder.command("bash", "-c", sb.toString());
 	        //processBuilder.command("/home/ec2-user/migrator/aws/aws-serverless-java-container/samples/springboot/pet-store/deploy.sh");
 
 	        try {
