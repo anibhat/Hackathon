@@ -297,7 +297,7 @@ public class ConverterUtil {
 	        sb.append("aws cloudformation deploy --template-file ");
 	        sb.append(projectDescription.get("rootPath")+File.separator);
 	        sb.append("output-sam.yaml --stack-name ServerlessSpringBoot --capabilities CAPABILITY_IAM ;");
-	       // sb.append(" aws cloudformation describe-stacks --stack-name ServerlessSpringBoot");
+	        sb.append(" aws cloudformation describe-stacks --stack-name ServerlessSpringBoot");
 	        
 	        System.out.println(sb.toString());
 	        
@@ -308,7 +308,7 @@ public class ConverterUtil {
 	        	StringBuffer output = new StringBuffer();
 	            Process process = processBuilder.start();
 
-	    /*        BufferedReader reader =
+	            BufferedReader reader =
 	                    new BufferedReader(new InputStreamReader(process.getInputStream()));
 
 	            String line;
@@ -316,20 +316,11 @@ public class ConverterUtil {
 	            	//output.append(line);
 	                System.out.println(line);
 	            }
-*/
+
 	            int exitCode = process.waitFor();
 	            System.out.println("\nExited with error code : " + exitCode);
 	            if (exitCode == 0) {
-	            	processBuilder = new ProcessBuilder();
-	            	processBuilder.command("bash", "-c", " aws cloudformation describe-stacks --stack-name ServerlessSpringBoot");
-	            	 BufferedReader reader =
-	 	                    new BufferedReader(new InputStreamReader(process.getInputStream()));
-
-	 	            String line;
-	 	            while ((line = reader.readLine()) != null) {
-	 	            	output.append(line);
-	 	                System.out.println(line);
-	 	            }
+	            	
 	            	return output.toString();
 	            }
 
