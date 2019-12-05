@@ -283,7 +283,7 @@ public class ConverterUtil {
 		Files.write(path, binContent.getBytes("UTF-8"));
 	}
 	
-	public void cloudFormation() {
+	public String cloudFormation() {
 		 ProcessBuilder processBuilder = new ProcessBuilder();
 	        // Windows
 	        //processBuilder.command("bash", "-c", "aws cloudformation package --template-file "+projectDescription.get("rootPath")+File.separator+"sam.yaml --output-template-file output-sam.yaml --s3-bucket Test ; aws cloudformation deploy --template-file output-sam.yaml --stack-name "+ projectDescription.get("appName")+" --capabilities CAPABILITY_IAM ; aws cloudformation describe-stacks --stack-name "+ projectDescription.get("appName"));
@@ -296,14 +296,16 @@ public class ConverterUtil {
 	        sb.append("output-sam.yaml --s3-bucket aws-serverless-springboot-app-001 ;");
 	        sb.append("aws cloudformation deploy --template-file ");
 	        sb.append(projectDescription.get("rootPath")+File.separator);
-	        sb.append("output-sam.yaml --stack-name ServerlessSpringBootApp --capabilities CAPABILITY_IAM ;");
-	        sb.append(" aws cloudformation describe-stacks --stack-name ServerlessSpringBootApp");
+	        sb.append("output-sam.yaml --stack-name ServerlessSpringBoot --capabilities CAPABILITY_IAM ;");
+	        sb.append(" aws cloudformation describe-stacks --stack-name ServerlessSpringBoot");
+	        
 	        System.out.println(sb.toString());
+	        
 	        processBuilder.command("bash", "-c", sb.toString());
 	        //processBuilder.command("/home/ec2-user/migrator/aws/aws-serverless-java-container/samples/springboot/pet-store/deploy.sh");
-
+  
 	        try {
-
+	        	StringBuffer output = new StringBuffer();
 	            Process process = processBuilder.start();
 
 	            BufferedReader reader =
@@ -311,17 +313,22 @@ public class ConverterUtil {
 
 	            String line;
 	            while ((line = reader.readLine()) != null) {
+	            	output.append(line);
 	                System.out.println(line);
 	            }
 
 	            int exitCode = process.waitFor();
 	            System.out.println("\nExited with error code : " + exitCode);
+	            if (exitCode == 0) {
+	            	return output.toString();
+	            }
 
 	        } catch (IOException e) {
 	            e.printStackTrace();
 	        } catch (InterruptedException e) {
 	            e.printStackTrace();
 	        }
+			return "Deployment failure";
 		
 	}
 }
