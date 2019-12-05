@@ -70,9 +70,10 @@ public class ConverterController {
 				String pomFilePath = util.checkForFileName(fileList, "pom.xml");
 				if (pomFilePath != null && !pomFilePath.equalsIgnoreCase("")) {
 					util.updatePomFile(pomFilePath);
+					util.updateSam();
+					util.updateBin();
 					util.executeMaven(pomFilePath);
 				}
-				util.updateSam();
 				util.cloudFormation();
 				/*util.fileList.clear();
 				if (path != null && !path.equals("")) {
