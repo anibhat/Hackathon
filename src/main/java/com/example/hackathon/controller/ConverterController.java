@@ -74,7 +74,7 @@ public class ConverterController {
 					util.updateBin();
 					util.executeMaven(pomFilePath);
 				}
-				util.cloudFormation();
+				 return new ResponseEntity<String>(util.cloudFormation(), HttpStatus.OK);
 				/*util.fileList.clear();
 				if (path != null && !path.equals("")) {
 					util.deleteDir(path);
