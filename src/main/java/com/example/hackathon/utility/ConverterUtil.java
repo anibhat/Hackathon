@@ -298,7 +298,7 @@ public class ConverterUtil {
 	        sb.append(projectDescription.get("rootPath")+File.separator);
 	        sb.append("output-sam.yaml --stack-name ServerlessSpringBootApp --capabilities CAPABILITY_IAM ;");
 	        sb.append(" aws cloudformation describe-stacks --stack-name ServerlessSpringBootApp");
-	        
+	        System.out.println(sb.toString());
 	        processBuilder.command("bash", "-c", sb.toString());
 	        //processBuilder.command("/home/ec2-user/migrator/aws/aws-serverless-java-container/samples/springboot/pet-store/deploy.sh");
 
