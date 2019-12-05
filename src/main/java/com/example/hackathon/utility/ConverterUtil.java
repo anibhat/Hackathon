@@ -291,7 +291,7 @@ public class ConverterUtil {
 	        StringBuffer sb = new StringBuffer();
 	        sb.append("aws cloudformation package --template-file ");
 	        sb.append(projectDescription.get("rootPath")+File.separator);
-	        sb.append("\"sam.yaml --output-template-file ");
+	        sb.append("sam.yaml --output-template-file ");
 	        sb.append(projectDescription.get("rootPath")+File.separator);
 	        sb.append("output-sam.yaml --s3-bucket aws-serverless-springboot-app-001 ;");
 	        sb.append("aws cloudformation deploy --template-file ");
